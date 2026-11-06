@@ -1,0 +1,20 @@
+# ── 设备绑定材料 ─────────────────────────────────────────────
+# 这些都能用 pull/pull_all.sh <设备名> 重新抓，绝不入库：
+#   keys/    keymaster 的 key 材料（设备绑定，泄露=能解该机 userdata）
+#   libs/    厂商 libkeymaster*.so（专有二进制，别转发）
+#   modules/ 厂商 TEE 内核模块
+#   docs/    fstab / 分区表（设备布局）
+devices/*/keys/
+devices/*/libs/
+devices/*/modules/
+devices/*/docs/
+devices/*/probe.txt
+devices/*/fbe.conf
+
+# ── 构建产物 ────────────────────────────────────────────────
+bin/kmkey
+bin/dmcreate
+bin/init
+*.o
+*.tar
+*.img

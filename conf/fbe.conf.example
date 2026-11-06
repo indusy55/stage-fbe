@@ -1,0 +1,37 @@
+# fbe.conf — 设备 profile。换设备时只改这个文件。
+# 所有变量都可被同名环境变量覆盖（见 fbe-run.sh）。
+
+# --- 工具位置 ---
+FBE_KMKEY=/home/indusy/Workspace/re-piano/FBE/bin/kmkey
+FBE_DMCREATE=/home/indusy/Workspace/re-piano/FBE/bin/dmcreate
+
+# --- TEE / keymaster ---
+# smcinvoke 一代是 /dev/smcinvoke；老设备是 /dev/qseecom（本工具集不支持）
+FBE_SMCI_DEV=/dev/smcinvoke
+FBE_TA_NAME=keymaster64
+FBE_TA_SVC=122
+# 输入：254B 内层 KMKD，或 282B encrypted_key.bin（自动跳过 28 字节头）
+FBE_BLOB=/run/fbe/encrypted_key.bin
+# 输出：100B 原始 key + 200 字符 hex
+FBE_KEY_OUT=/run/fbe/storage.key
+FBE_KEY_HEX=/run/fbe/storage.key.hex
+
+# --- userdata ---
+# 留空则自动探测：/dev/block/by-name/userdata -> /dev/block/mapper/userdata
+# -> 扫 /sys/class/block/*/uevent 的 PARTNAME=userdata
+FBE_USERDATA=
+FBE_DM_NAME=fbe
+FBE_DM_TARGET=dm-default-key
+FBE_DM_PARAMS=sector_size:4096 iv_large_sectors wrappedkey_v0
+FBE_SECTOR_SIZE=4096
+
+# --- 挂载 ---
+FBE_MOUNT=/data
+FBE_MOUNT_OPTS=
+
+# --- 需要预载的内核模块（按设备填；没有就留空）---
+FBE_MODULES="tmecom-intf qseecom_proxy si_core_module mem_object"
+FBE_MODDIR=/usr/lib/modules/$(uname -r)
+
+# --- 其它 ---
+FBE_RUNDIR=/run/fbe
