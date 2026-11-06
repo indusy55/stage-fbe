@@ -69,7 +69,7 @@
 |---|---|---|---|
 | key 材料 | `/metadata/vold/metadata_encryption/key/` 下的 `encrypted_key`(282B)、`keymaster_key_blob`(214B)、`secdiscardable`(16K)、`version` | `pull_key_material.sh` | `key_back/` 是同一份的备份；`/metadata` 自己是加密的，**必须在 vold 已挂起来之后**读（正常 Android 或 recovery） |
 | keymaster 分区 | `/dev/block/by-name/keymaster_a` -> `/dev/block/sde11` | `pull_key_material.sh`（兜底） | 里面只有 214B 级 wrapped 原件，不能直接当 key 用 |
-| 厂商 TEE 模块 | `/vendor/lib/modules`、`/vendor_dlkm/lib/modules`、`/odm/lib/modules`、`/odm_dlkm/lib/modules`、`/system_dlkm/lib/modules`；Debian 下是 `/usr/lib/modules/$(uname -r)/` | `pull_modules.sh` | **recovery 里 vendor\* 不挂**，实测全空；要么正常 Android 启动，要么在 Debian 里抓 |
+| 厂商 TEE 模块 | **主来源：`vendor_boot` 分区的 vendor ramdisk**（本机 `vendor_boot_a` -> `/dev/block/sde23`，VNDRBOOT v4 + legacy-LZ4 cpio，88 MB，`lib/modules/` 下 449 个 .ko，四个 TEE 模块都在）；其次 `/vendor/lib/modules`、`/vendor_dlkm/lib/modules`、`/odm*/lib/modules`、`/system_dlkm/lib/modules`；Debian 下是 `/usr/lib/modules/$(uname -r)/` | `pull_vendor_boot_modules.sh`（`pull_modules.sh` 自动调用） | 我们自己打的 init_boot ramdisk 里 **没有** `/lib/modules`；模块是 bootloader 把 vendor_boot ramdisk 合并进 initramfs 后 init 才看到的 |
 | 厂商 keymaster 库 | `/vendor/lib64/libkeymaster*.so`、`/system/lib64/libkeymaster*.so` | `pull_modules.sh` | 本机这几份在 `/system/lib64`（`libkeymaster4support.so` 等） |
 | fstab | `/vendor/etc/fstab.qcom`、`/odm/etc/fstab.qcom`、`/first_stage_ramdisk/fstab.qcom` | `pull_fstab.sh` | 本机实测只有 `/first_stage_ramdisk/fstab.qcom` |
 | 分区表 | `/sys/class/block/*/uevent` 的 `PARTNAME=`、`/dev/block/by-name/*` | `pull_fstab.sh` | 本机：`userdata=sda34`、`metadata=sda20`、`keymaster_a=sde11`、`misc=sda12` |

@@ -26,13 +26,20 @@
 - **是什么**：`.ko` 是内核模块，硬盘控制器驱动、文件系统、TEE 通道全在里面。
 - **它做什么**：按写死的清单（约 158 个）从 `/lib/modules/<名字>.ko` 逐个 `insmod`，跑两轮
   （因为模块之间有依赖，第一轮会有一部分因缺依赖失败，第二轮才收敛）。
-- **需要什么材料**：那一批 `.ko` **[绑]**——厂商私有，版本必须和内核一致，用
-  `pull/pull_modules.sh` 抓。分成两组：
+- **需要什么材料**：那一批 `.ko` **[绑]**——厂商私有，版本必须和内核一致。
+  **它们不在我们自己打的 init_boot ramdisk 里**（那份里 `/lib/modules` 是空的），
+  而是在 **vendor_boot 分区的 vendor ramdisk** 里：bootloader 会把那段 ramdisk
+  合并进 first-stage initramfs，init 才在 `/lib/modules/*.ko` 看得到。
+  本机实测：vendor_boot_a（`/dev/block/sde23`）的 vendor ramdisk 解开是 88 MB cpio，
+  `lib/modules` 下 449 个 `.ko`。抓取用 `pull/pull_vendor_boot_modules.sh`（`pull_modules.sh` 会自动调用它）。
+  分成两组：
   - 存储组：`ufs_qcom` `phy-qcom-ufs*` `qcom_scm` `qcom_ice` … → 让 `/dev/sda*` 出现
   - TEE 组：`tmecom-intf` `qseecom_proxy` `si_core_module` `mem_object` `smcinvoke_dlkm`
     → 让 `/dev/smcinvoke` 能用、TA 能加载
 - **成功的样子**：`/dev/block/...`、`/dev/sda34` 出现；`/dev/mapper/control` 存在；
   `/dev/smcinvoke` 可打开；init 日志里 `set pass0 ok=NN` / `pass1 ok=NN`。
+  **本机实测只有 `pass0 ok=19`、`pass1 ok=0`**——因为 GKI 内核把 UFS、dm、
+  smcinvoke 这些编成了 builtin，真正需要从 ramdisk 载的只有 19 个（含 TEE 那几个）。
 - **失败会怎样**：后面每步都会连锁失败，init 会走 `fallback`（回 Android），不会动数据。
 - **交给下一步**：可用的块设备 + 可用的 device-mapper 接口 + 可用的 TEE 通道。
 
